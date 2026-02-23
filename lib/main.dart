@@ -55,26 +55,23 @@ class _GameScreenState extends State<GameScreen> {
           children: [
             Column(
               children: [
-                const SizedBox(height: 20), // Больше отступа сверху
+                const SizedBox(height: 30),
                 GameHeader(score: score, level: currentLevel, balls: ballsCount),
                 Expanded(
-                  child: SingleChildScrollView(
-                    physics: const NeverScrollableScrollPhysics(), // Отключаем скролл
-                    child: Container(
-                      margin: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade800, width: 2),
-                      ),
-                      child: GameWidget(
-                        key: _gameWidgetKey,
-                        onStatsChanged: updateStats,
-                        isPausedCallback: (paused) {
-                          setState(() {
-                            isPaused = paused;
-                          });
-                        },
-                      ),
+                  child: Container(
+                    margin: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade800, width: 2),
+                    ),
+                    child: GameWidget(
+                      key: _gameWidgetKey,
+                      onStatsChanged: updateStats,
+                      isPausedCallback: (paused) {
+                        setState(() {
+                          isPaused = paused;
+                        });
+                      },
                     ),
                   ),
                 ),
@@ -760,21 +757,24 @@ class _GameWidgetState extends State<GameWidget> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final gameWidth = size.width - 24;
+    final gameHeight = size.height - 80;
+
     return Focus(
         focusNode: _focusNode,
         onKey: (node, event) {
           final isKeyDown = event.isKeyPressed(LogicalKeyboardKey.arrowLeft) ||
               event.isKeyPressed(LogicalKeyboardKey.arrowRight);
-
           if (!isPaused && !isGameOver) {
             if (event.isKeyPressed(LogicalKeyboardKey.arrowLeft)) {
               setState(() {
-                paddle.x = (paddle.x - 12).clamp(0, 300 - paddle.width);
+                paddle.x = (paddle.x - 12).clamp(0, gameWidth - paddle.width);
               });
               return KeyEventResult.handled;
             } else if (event.isKeyPressed(LogicalKeyboardKey.arrowRight)) {
               setState(() {
-                paddle.x = (paddle.x + 12).clamp(0, 300 - paddle.width);
+                paddle.x = (paddle.x + 12).clamp(0, gameWidth - paddle.width);
               });
               return KeyEventResult.handled;
             }
@@ -784,13 +784,13 @@ class _GameWidgetState extends State<GameWidget> with TickerProviderStateMixin {
         child: GestureDetector(
           onPanUpdate: !isPaused && !isGameOver ? (details) {
             setState(() {
-              paddle.x = (paddle.x + details.delta.dx).clamp(0, 300 - paddle.width);
+              paddle.x = (paddle.x + details.delta.dx).clamp(0, gameWidth - paddle.width);
             });
           } : null,
           child: Stack(
             children: [
               CustomPaint(
-                size: const Size(300, 500),
+                size: Size(gameWidth, gameHeight),
                 painter: GamePainter(
                   blocks,
                   balls,
