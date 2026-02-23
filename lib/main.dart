@@ -55,23 +55,26 @@ class _GameScreenState extends State<GameScreen> {
           children: [
             Column(
               children: [
-                const SizedBox(height: 12),
+                const SizedBox(height: 20), // Больше отступа сверху
                 GameHeader(score: score, level: currentLevel, balls: ballsCount),
                 Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade800, width: 2),
-                    ),
-                    child: GameWidget(
-                      key: _gameWidgetKey,
-                      onStatsChanged: updateStats,
-                      isPausedCallback: (paused) {
-                        setState(() {
-                          isPaused = paused;
-                        });
-                      },
+                  child: SingleChildScrollView(
+                    physics: const NeverScrollableScrollPhysics(), // Отключаем скролл
+                    child: Container(
+                      margin: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade800, width: 2),
+                      ),
+                      child: GameWidget(
+                        key: _gameWidgetKey,
+                        onStatsChanged: updateStats,
+                        isPausedCallback: (paused) {
+                          setState(() {
+                            isPaused = paused;
+                          });
+                        },
+                      ),
                     ),
                   ),
                 ),
@@ -79,21 +82,21 @@ class _GameScreenState extends State<GameScreen> {
             ),
             // Кнопка паузы в углу
             Positioned(
-              top: 16,
-              right: 16,
+              top: 18,
+              right: 18,
               child: GestureDetector(
                 onTap: () {
                   _gameWidgetKey.currentState?.togglePause();
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF5B9FD8).withOpacity(0.95),
+                    color: Colors.white.withOpacity(0.95),
                     borderRadius: BorderRadius.circular(6),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF5B9FD8).withOpacity(0.6),
-                        blurRadius: 8,
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 6,
                         spreadRadius: 1,
                       ),
                     ],
@@ -101,8 +104,8 @@ class _GameScreenState extends State<GameScreen> {
                   child: Text(
                     isPaused ? '▶' : '⏸',
                     style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
+                      color: Colors.black,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -226,17 +229,21 @@ class _GameWidgetState extends State<GameWidget> with TickerProviderStateMixin {
       });
     });
     _controller.repeat();
+    // Даём фокус при инициализации
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _focusNode.requestFocus();
+    });
   }
 
   void _initGame() {
     blocks = _generateLevel(currentLevel);
-    balls = [Ball(x: 150, y: 450, radius: 8, dx: 2.5 * gameSpeed, dy: -3.0 * gameSpeed)];
+    balls = [Ball(x: 150, y: 420, radius: 8, dx: 2.5 * gameSpeed, dy: -3.0 * gameSpeed)];
     ballsCount = 1;
     particles = [];
     powerUps = [];
     paddle = Paddle(
-      x: 120,
-      y: 470,
+      x: 110,
+      y: 460, // Ниже чем было (было 470)
       width: 80,
       height: 12,
     );
@@ -247,53 +254,51 @@ class _GameWidgetState extends State<GameWidget> with TickerProviderStateMixin {
   List<Block> _generateLevel(int level) {
     List<Block> levelBlocks = [];
     double gameWidth = 300;
-    double gameHeight = 300;
     double blockWidth = 45;
-    double blockHeight = 16;
-    double padding = 4;
+    double blockHeight = 15;
+    double padding = 5;
 
-    int targetBlockCount = 15 + level * 3;
-    if (targetBlockCount > 50) targetBlockCount = 50;
+    int cols = 6;
+    int rows = 8 + (level ~/ 2); // Больше рядов вниз
+    if (rows > 12) rows = 12;
 
     int maxSpecialBlocks = level <= 3 ? 2 : (level <= 6 ? 3 : 4);
     int specialCount = 0;
     int wallCount = 0;
-    int maxWalls = level >= 5 ? 2 + (level - 5) ~/ 3 : 0; // Стены с уровня 5
+    int maxWalls = level >= 5 ? 2 + (level - 5) ~/ 3 : 0;
 
-    // Генерируем блоки в случайном порядке с нерегулярной сеткой
     final random = DateTime.now().millisecondsSinceEpoch % 10000;
-    int blockCount = 0;
 
-    for (int y = 40; y < gameHeight - 40 && blockCount < targetBlockCount; y += (blockHeight + padding).toInt()) {
-      // Смещение каждой строки для неровности
-      double xOffset = ((y.toInt() + random) % 10) - 5;
+    for (int r = 0; r < rows; r++) {
+      for (int c = 0; c < cols; c++) {
+        double x = c * (blockWidth + padding) + 7;
+        double y = r * (blockHeight + padding) + 35;
 
-      for (double x = 10 + xOffset; x < gameWidth - blockWidth && blockCount < targetBlockCount; x += blockWidth + padding) {
-        // Пропускаем блоки случайно для неровности
-        if ((x.toInt() + y.toInt()) % 7 == 0) continue;
+        // Ограничиваем высоту блоков (оставляем место для мячика и платформы)
+        if (y > 380) continue;
 
         int hits = 1;
         bool isSpecial = false;
         bool isWall = false;
-        Color color = const Color(0xFF808080);
+        Color color = const Color(0xFF707070);
 
-        // Определяем стены (неуничтожаемые блоки) на уровнях 5+
+        // Стены на уровнях 5+
         if (level >= 5 && wallCount < maxWalls &&
-            (x.toInt() * 19 + y.toInt() * 23 + random) % 20 == 0) {
+            (r * 7 + c * 13 + random) % 20 == 0) {
           isWall = true;
           wallCount++;
-          hits = 999; // Не уничтожаются
-          color = const Color(0xFF3A3A3A); // Тёмно-серый
+          hits = 999;
+          color = const Color(0xFF3A3A3A);
         } else {
-          // Определяем урон блока на основе уровня
+          // Урон на основе уровня
           if (level >= 3) {
-            int rand = (x.toInt() + y.toInt() * 7) % 10;
+            int rand = (r * 7 + c * 13) % 10;
             if (rand < 3) hits = 2;
             else if (rand < 6 && level >= 6) hits = 3;
             else if (rand < 8 && level >= 9) hits = 4;
           }
 
-          // Определяем цвет на основе урона
+          // Цвет на основе урона
           if (hits == 1) {
             color = const Color(0xFF707070); // Серый
           } else if (hits == 2) {
@@ -304,19 +309,19 @@ class _GameWidgetState extends State<GameWidget> with TickerProviderStateMixin {
             color = const Color(0xFF1E5BA8); // Тёмный синий
           }
 
-          // Случайно выбираем спецблоки
+          // Спецблоки
           if (specialCount < maxSpecialBlocks &&
-              (x.toInt() * 13 + y.toInt() * 17 + random) % 15 == 0 &&
+              (r * 11 + c * 17 + random) % 15 == 0 &&
               level > 1) {
             isSpecial = true;
             specialCount++;
-            color = const Color(0xFF4ECDC4); // Красивый голубовато-зелёный
+            color = const Color(0xFF4ECDC4); // Голубовато-зелёный
           }
         }
 
         levelBlocks.add(Block(
           x: x,
-          y: y.toDouble(),
+          y: y,
           width: blockWidth,
           height: blockHeight,
           hits: hits,
@@ -324,8 +329,6 @@ class _GameWidgetState extends State<GameWidget> with TickerProviderStateMixin {
           isSpecial: isSpecial,
           isWall: isWall,
         ));
-
-        blockCount++;
       }
     }
 
