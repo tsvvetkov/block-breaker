@@ -152,11 +152,11 @@ class GameWidget extends StatefulWidget {
 }
 
 class _GameWidgetState extends State<GameWidget> with TickerProviderStateMixin {
-  late List<Block> blocks;
-  late List<Ball> balls;
-  late Paddle paddle;
-  late List<Particle> particles;
-  late List<PowerUp> powerUps;
+  List<Block> blocks = [];
+  List<Ball> balls = [];
+  Paddle paddle = Paddle(x: 0, y: 0, width: 80, height: 12);
+  List<Particle> particles = [];
+  List<PowerUp> powerUps = [];
   int score = 0;
   int currentLevel = 1;
   int ballsCount = 1;
@@ -267,7 +267,7 @@ class _GameWidgetState extends State<GameWidget> with TickerProviderStateMixin {
   }
 
   void _updateGame() {
-    if (isPaused || isGameOver) return;
+    if (!_initialized || isPaused || isGameOver) return;
 
     if (slowBallTimer > 0) {
       slowBallTimer--;
