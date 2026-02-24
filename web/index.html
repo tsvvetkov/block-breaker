@@ -34,5 +34,29 @@
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
+
+  <script>
+      // Telegram Mini App support
+      if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.expand();
+        window.Telegram.WebApp.setHeaderColor('#0a0e27');
+        window.Telegram.WebApp.setBackgroundColor('#0a0e27');
+      }
+
+      // Prevent scrolling
+      document.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+      }, { passive: false });
+
+      // Prevent selection
+      document.addEventListener('selectstart', function(e) {
+        e.preventDefault();
+      });
+
+      // Prevent context menu
+      document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+      });
+  </script>
 </body>
 </html>
