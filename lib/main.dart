@@ -46,57 +46,60 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                const SizedBox(height: 48),
-                GameHeader(score: score, level: currentLevel, balls: ballsCount),
-                const SizedBox(height: 6),
-                Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.only(left: 12, right: 12, top: 4, bottom: 24),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade800, width: 2),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: GameWidget(
-                        key: _gameWidgetKey,
-                        onStatsChanged: updateStats,
-                        isPausedCallback: (paused) {
-                          setState(() { isPaused = paused; });
-                        },
+    return ScrollConfiguration(
+      behavior: const ScrollBehavior().copyWith(overscroll: false, scrollbars: false),
+      child: Scaffold(
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  const SizedBox(height: 72),
+                  GameHeader(score: score, level: currentLevel, balls: ballsCount),
+                  const SizedBox(height: 6),
+                  Expanded(
+                    child: Container(
+                      margin: const EdgeInsets.only(left: 12, right: 12, top: 4, bottom: 24),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade800, width: 2),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: GameWidget(
+                          key: _gameWidgetKey,
+                          onStatsChanged: updateStats,
+                          isPausedCallback: (paused) {
+                            setState(() { isPaused = paused; });
+                          },
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
-            Positioned(
-              top: 6,
-              right: 18,
-              child: GestureDetector(
-                onTap: () => _gameWidgetKey.currentState?.togglePause(),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.95),
-                    borderRadius: BorderRadius.circular(6),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 6)],
-                  ),
-                  child: Text(
-                    isPaused ? '▶' : '⏸',
-                    style: const TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.bold),
+                  const SizedBox(height: 8),
+                ],
+              ),
+              Positioned(
+                top: 6,
+                right: 18,
+                child: GestureDetector(
+                  onTap: () => _gameWidgetKey.currentState?.togglePause(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.95),
+                      borderRadius: BorderRadius.circular(6),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 6)],
+                    ),
+                    child: Text(
+                      isPaused ? '▶' : 'II',
+                      style: const TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -197,7 +200,7 @@ class _GameWidgetState extends State<GameWidget> with TickerProviderStateMixin {
   void _initGame() {
     blocks = _generateLevel(currentLevel);
     final cx = _w / 2;
-    balls = [Ball(x: cx, y: _h * 0.73, radius: 8, dx: 2.5 * gameSpeed, dy: -3.0 * gameSpeed)];
+    balls = [Ball(x: cx, y: _h * 0.73, radius: 8, dx: 2.75 * gameSpeed, dy: -3.3 * gameSpeed)];
     ballsCount = 1;
     particles = [];
     powerUps = [];
@@ -514,6 +517,8 @@ class _GameWidgetState extends State<GameWidget> with TickerProviderStateMixin {
         return KeyEventResult.ignored;
       },
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onVerticalDragUpdate: (_) {}, // перехватываем вертикальный скролл
         onPanUpdate: !isPaused && !isGameOver ? (details) {
           setState(() { paddle.x = (paddle.x + details.delta.dx).clamp(0, _w - paddle.width); });
         } : null,
